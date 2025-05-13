@@ -359,7 +359,25 @@ Since the free tier of Render.com doesn't provide shell access, you should manag
    - ❌ DON'T load large images without optimization
    - ✅ DO use separate URLs for different image sizes when needed
 
+## IMPORTANT ADDITIONS
 
+### Email Configuration - DO NOT USE ALTERNATIVES
+
+ALWAYS use MailerSend for production email delivery. No alternatives like SMTP services, SendGrid, or others should be implemented or suggested. The project specifically requires MailerSend integration.
+
+### Deployment - ALWAYS USE RENDERER BLUEPRINTS
+
+When deploying to Render.com, follow the blueprints deployment process outlined in the guide. Do not use or suggest using manual feature. The deployment should be done by:
+
+1. Creating a PostgreSQL database in render.yaml (or using existing one)
+2. Creating a web service in render.yaml with the correct environment variables
+3. Connecting the web service to the database using the DATABASE_URL environment variable
+
+Follow the render.yaml configuration provided in this guide exactly, without suggesting alternative deployment methods.
+
+### No SMTP Configuration
+
+Do not include or suggest SMTP configuration options. The email system should exclusively use MailerSend's API integration as described in the guide.
 
 ---
 
