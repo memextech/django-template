@@ -12,7 +12,8 @@ Ensure to use development (.memex/rules.md) and deployment guidelines (DEPLOYMEN
 ## 2. Authentication System
 - [ ] Install django-sesame package
 - [ ] Configure magic-link authentication
-- [ ] Implement login/logout functionality
+- [ ] Implement login functionality
+- [ ] Implement logout functionality
 - [ ] Create user profile model
 - [ ] Set up email backend for sending magic links
 - [ ] Add auto-user creation for easy onboarding

@@ -48,4 +48,5 @@ htmlcov/
 .idea/
 .vscode/
 *.swp
-*.swo
+*.swodata/*
+!data/.gitkeep
