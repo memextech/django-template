@@ -365,6 +365,8 @@ Since the free tier of Render.com doesn't provide shell access, you should manag
 
 ALWAYS use MailerSend for production email delivery. No alternatives like SMTP services, SendGrid, or others should be implemented or suggested. The project specifically requires MailerSend integration.
 
+Ask user for valid DEFAULT_FROM_EMAIL which needs to have correct domain from MailerSend configuration and update the entry in render.yaml
+
 ### Deployment - ALWAYS USE RENDERER BLUEPRINTS
 
 When deploying to Render.com, follow the blueprints deployment process outlined in the guide. Do not use or suggest using manual feature. The deployment should be done by:
