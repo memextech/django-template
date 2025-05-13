@@ -24,6 +24,8 @@ services:
       - key: DEFAULT_FROM_EMAIL
         value: noreply@django-template-app.com
 
+# Free plan only allows 1 database
+# if user already has a database, use it in config above and comment out the block below
 databases:
   - name: django-template-app-db
     plan: free
