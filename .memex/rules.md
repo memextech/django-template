@@ -188,46 +188,163 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 ### Production with MailerSend
 
-1. **Create a direct mailer implementation**:
+1. **Create a robust direct mailer implementation**:
    ```python
-   # django-template-app/mailer.py
+   """
+   Direct MailerSend integration for email sending.
+   """
    from django.conf import settings
-   from mailersend import emails
+   from django.template.loader import render_to_string
+   import datetime
    
    def send_mailersend_email(to_email, subject, html_content, text_content=None):
-       mailer = emails.NewEmail(settings.MAILERSEND_API_KEY)
+       """
+       Send an email using MailerSend API directly.
+       Falls back to console output if MAILERSEND_API_KEY is not set.
        
-       message = {
-           "from": {
-               "email": settings.DEFAULT_FROM_EMAIL,
-               "name": "Your App Name"
-           },
-           "to": [{"email": to_email}],
-           "subject": subject,
-           "html": html_content,
-           "text": text_content or html_content,
-       }
+       Args:
+           to_email: Recipient email
+           subject: Email subject
+           html_content: HTML body content
+           text_content: Plain text body (optional)
+       """
+       # Console output for development
+       if settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
+           print("\n----- EMAIL -----")
+           print(f"To: {to_email}")
+           print(f"Subject: {subject}")
+           print(f"HTML Content: {html_content}")
+           print(f"Text Content: {text_content}")
+           print("----- END EMAIL -----\n")
+           return True
        
-       mailer.send(message)
+       # Use MailerSend for actual sending
+       try:
+           from mailersend import emails
+           
+           # Check if we have an API key
+           if not hasattr(settings, 'MAILERSEND_API_KEY') or not settings.MAILERSEND_API_KEY:
+               print("No MAILERSEND_API_KEY found in settings. Email not sent.")
+               return False
+           
+           # Initialize the API client
+           mailer = emails.NewEmail(settings.MAILERSEND_API_KEY)
+           
+           # Create the message structure
+           message = {
+               "from": {
+                   "email": settings.DEFAULT_FROM_EMAIL,
+                   "name": "Your App Name"
+               },
+               "to": [
+                   {
+                       "email": to_email
+                   }
+               ],
+               "subject": subject,
+               "html": html_content
+           }
+           
+           # Add plain text version if provided
+           if text_content:
+               message["text"] = text_content
+           
+           # Send the email
+           mailer.send(message)
+           return True
+           
+       except ImportError:
+           print("MailerSend package not installed. Please run 'pip install mailersend'")
+           return False
+       except Exception as e:
+           print(f"Error sending email: {str(e)}")
+           return False
    ```
 
-2. **Create email helper functions**:
+2. **Create comprehensive email helper functions with fallbacks**:
    ```python
    def send_magic_link_email(user, login_url):
+       """Send email with magic link for login"""
        subject = "Your Login Link"
-       html_content = render_to_string('emails/magic_link.html', {
-           'user': user,
-           'login_url': login_url
-       })
-       text_content = f"Click here to log in: {login_url}"
        
-       send_mailersend_email(user.email, subject, html_content, text_content)
+       # Use template if available, otherwise fall back to inline HTML
+       try:
+           html_content = render_to_string('emails/magic_link.html', {
+               'user': user,
+               'login_url': login_url,
+               'year': datetime.datetime.now().year
+           })
+       except:
+           # Fallback HTML content
+           html_content = f"""
+           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
+               <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+                   <h1 style="color: #007bff; margin: 0;">Your App Name</h1>
+               </div>
+               
+               <div style="padding: 20px 0;">
+                   <p>Hello {user.username},</p>
+                   
+                   <p>You requested a magic login link. Click the button below to securely log in:</p>
+                   
+                   <div style="text-align: center; margin: 25px 0;">
+                       <a href="{login_url}" 
+                          style="display: inline-block; background-color: #007bff; color: white; text-decoration: none; 
+                                padding: 12px 24px; border-radius: 4px; font-weight: bold;">
+                           Log In Securely
+                       </a>
+                   </div>
+                   
+                   <div style="background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 15px; margin: 20px 0;">
+                       <strong>Note:</strong> This link will expire soon and can only be used once.
+                   </div>
+                   
+                   <p>If you didn't request this link, you can safely ignore this email.</p>
+               </div>
+               
+               <div style="text-align: center; color: #999; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                   <p>&copy; {datetime.datetime.now().year} Your App Name. All rights reserved.</p>
+               </div>
+           </div>
+           """
+       
+       # Plain text version
+       text_content = f"""
+       Hello {user.username},
+       
+       You requested a magic login link.
+       
+       To log in securely, please visit the following link:
+       {login_url}
+       
+       Note: This link will expire soon and can only be used once.
+       
+       If you didn't request this link, you can safely ignore this email.
+       
+       © {datetime.datetime.now().year} Your App Name. All rights reserved.
+       """
+       
+       return send_mailersend_email(user.email, subject, html_content, text_content)
    ```
 
-3. **Configure environment variables**:
+3. **Configure environment variables with proper fallbacks**:
    ```
-   MAILERSEND_API_KEY=your-api-key
-   DEFAULT_FROM_EMAIL=noreply@yourdomain.com
+   # Development
+   EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+   DEFAULT_FROM_EMAIL=noreply@example.com
+   
+   # Production
+   # EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend  # Keep console for testing in production
+   # MAILERSEND_API_KEY=your-api-key
+   # DEFAULT_FROM_EMAIL=noreply@yourdomain.com  # Must be verified in MailerSend
+   ```
+
+4. **Add to settings.py**:
+   ```python
+   # Email configuration
+   EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+   DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@example.com')
+   MAILERSEND_API_KEY = env('MAILERSEND_API_KEY', default='')
    ```
 
 ## Image Handling
@@ -363,7 +480,32 @@ Since the free tier of Render.com doesn't provide shell access, you should manag
 
 ### Email Configuration - DO NOT USE ALTERNATIVES
 
-ALWAYS use MailerSend for production email delivery. No alternatives like SMTP services, SendGrid, or others should be implemented or suggested. The project specifically requires MailerSend integration.
+ALWAYS use MailerSend for production email delivery with Direct API integration. No alternatives like SMTP services, SendGrid, or others should be implemented or suggested. The project specifically requires MailerSend integration.
+
+### Email Implementation Best Practices
+
+1. **Direct API Integration Only**:
+   - Always use the MailerSend Python SDK directly (`from mailersend import emails`)
+   - Never use Django's built-in email system or email backends for production
+   - Implement a development fallback to console output
+
+2. **Robust Error Handling**:
+   - Add try/except blocks around API calls
+   - Provide fallbacks for missing API keys
+   - Include package import error handling
+   - Log errors appropriately without exposing sensitive information
+
+3. **Template Fallbacks**:
+   - Always implement inline HTML fallback if template rendering fails
+   - Use consistent styling between template and fallback HTML
+   - Provide plain text alternatives for all emails
+   - Include current year in copyright notices using datetime
+
+4. **Configuration Pattern**:
+   - Use console backend by default in development
+   - Include explicit checks for EMAIL_BACKEND type
+   - Support both settings methods (environment variables and settings attributes)
+   - Never hard-code API keys or credentials
 
 Ask user for valid DEFAULT_FROM_EMAIL which needs to have correct domain from MailerSend configuration and update the entry in render.yaml
 
