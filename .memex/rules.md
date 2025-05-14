@@ -482,6 +482,8 @@ Since the free tier of Render.com doesn't provide shell access, you should manag
 
 ALWAYS use MailerSend for production email delivery with Direct API integration. No alternatives like SMTP services, SendGrid, or others should be implemented or suggested. The project specifically requires MailerSend integration.
 
+Remind user that DEFAULT_FROM_EMAIL is correct domain from MailerSend configuration
+
 ### Email Implementation Best Practices
 
 1. **Direct API Integration Only**:
@@ -507,7 +509,7 @@ ALWAYS use MailerSend for production email delivery with Direct API integration.
    - Support both settings methods (environment variables and settings attributes)
    - Never hard-code API keys or credentials
 
-Ask user for valid DEFAULT_FROM_EMAIL which needs to have correct domain from MailerSend configuration and update the entry in render.yaml
+
 
 ### Deployment - ALWAYS USE RENDERER BLUEPRINTS
 
